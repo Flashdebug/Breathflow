@@ -11,6 +11,12 @@
 <link rel="manifest" href="manifest.json">
 
 <style>
+  .waveSVG{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+
 :root{
   --bg:#040814;--text:#fff;--accent:#7dd3fc;
 }
@@ -105,6 +111,20 @@ fill="none" stroke-linecap="round"
 transform="rotate(-90 150 150)"/>
 </svg>
 
+  <!-- 🌊 WAVE -->
+<svg class="waveSVG" viewBox="0 0 300 300">
+  <defs>
+    <clipPath id="clip">
+      <circle cx="150" cy="150" r="130"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#clip)">
+    <path id="wave" fill="rgba(125,211,252,0.45)"></path>
+  </g>
+</svg>
+
+
 <div id="time">
 <div class="phase">Ready</div>
 <div id="seconds">0</div>
@@ -138,6 +158,8 @@ const circle=document.querySelector('.progress');
 const sec=document.getElementById('seconds');
 const phaseEl=document.querySelector('.phase');
 const ring=document.getElementById('ring');
+  const wave = document.getElementById("wave");
+let waveOffset = 0;
 
 const r=130;
 const C=2*Math.PI*r;
@@ -162,7 +184,20 @@ function vibrate(ms){
 function ease(t){
   return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
 }
+function drawWave(level, t){
+  const amplitude = 10;
+  let y = 300 - (level * 260);
 
+  let path = `M 0 ${y}`;
+
+  for(let x=0;x<=300;x+=10){
+    let dy = Math.sin((x+t)*0.05)*amplitude;
+    path += ` L ${x} ${y + dy}`;
+  }
+
+  path += ` L 300 300 L 0 300 Z`;
+  wave.setAttribute("d", path);
+}
 function loop(now){
 if(running){
 
@@ -183,6 +218,21 @@ lastPhase=phase.name;
 let pt=t-acc;
 let prog=pt/phase.duration;
 let s=ease(prog);
+  let level;
+
+if(phase.name==='Inhale'){
+  level = s;        // rise
+}
+else if(phase.name==='Exhale'){
+  level = 1 - s;    // fall
+}
+else{
+  level = 1;        // full during hold
+}
+
+waveOffset += 2;
+drawWave(level, waveOffset);
+
 
 let stroke;
 
@@ -222,16 +272,21 @@ elapsedSaved+=(performance.now()-startTime)/1000;
 }
 
 function reset(){
-running=false;
-startTime=0;
-elapsedSaved=0;
-lastPhase="";
+  running=false;
+  startTime=0;
+  elapsedSaved=0;
+  lastPhase="";
 
-circle.style.strokeDashoffset=C;
-sec.textContent="0";
-phaseEl.textContent="Ready";
-ring.style.transform="scale(1)";
+  circle.style.strokeDashoffset=C;
+  sec.textContent="0";
+  phaseEl.textContent="Ready";
+  ring.style.transform="scale(1)";
+
+  /* ✅ reset wave */
+  waveOffset = 0;
+  drawWave(0, 0);
 }
+
 
 requestAnimationFrame(loop);
 </script>
