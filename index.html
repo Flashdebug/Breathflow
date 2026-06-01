@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BreathFlow</title>
+<meta name="theme-color" content="#040814" />
+manifest.json
+
+<style>
+:root {
+  --bg: #040814;
+  --text: #fff;
+  --accent: #7dd3fc;
+}
+
+/* GENERAL */
+body {
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg);
+  font-family: system-ui, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--text);
+}
+
+/* ---------------- HOME SCREEN ---------------- */
+#homeScreen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 1s ease forwards;
+  z-index: 5;
+}
+
+#glowBehindIcon {
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(125,211,252,0.35), transparent 70%);
+  animation: pulseGlow 3.5s infinite ease-in-out;
+  position: absolute;
+  z-index: 1;
+}
+
+#iconImage {
+  width: 140px;
+  height: 140px;
+  z-index: 2;
+}
+
+#homeTitle {
+  margin-top: 220px;
+  font-size: 1.4rem;
+  opacity: 0.9;
+  z-index: 3;
+}
+
+/* Glow animation */
+@keyframes pulseGlow {
+  0% { transform: scale(1); opacity: 0.65; }
+  50% { transform: scale(1.22); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.65; }
+}
+
+/* Fade-out transition */
+.fadeOut {
+  animation: fadeOut 1s ease forwards;
+}
+@keyframes fadeOut {
+  to { opacity: 0; pointer-events: none; }
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---------------- BREATHING UI ---------------- */
+#breathUI {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1s ease;
+}
+
+#breathUI.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.card {
+  width: min(420px, 94vw);
+  text-align: center;
+  padding: 20px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.ringwrap {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  margin: 20px auto;
+  transition: transform 0.1s linear;
+}
+
+svg {
+  position: absolute;
+  inset: 0;
+}
+
+#time {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.phase {
+  opacity: 0.7;
+}
+
+#seconds {
+  font-size: 2rem;
+}
+
+button {
+  margin: 6px;
+  padding: 10px 15px;
+  border: 0;
+  border-radius: 10px;
+  background: #1e293b;
+  color: #fff;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<!-- ---------------- HOME SCREEN ---------------- -->
+<div id="homeScreen">
+  <div id="glowBehindIcon"></div>
+  icons/icon-192.png
+  <div id="homeTitle">BreathFlow — Breathe Better Today</div>
+</div>
+
+<!-- ---------------- BREATHING UI ---------------- -->
+<div id="breathUI">
+<div class="card">
+<h2>BreathFlow</h2>
+
+<div class="ringwrap" id="ring">
+<svg viewBox="0 0 300 300">
+<circle cx="150" cy="150" r="130" stroke="#1e293b" stroke-width="12" fill="none" />
+<circle class="progress" cx="150" cy="150" r="130" stroke="#7dd3fc" stroke-width="12" fill="none"
+stroke-linecap="round" transform="rotate(-90 150 150)" />
+</svg>
+
+<div id="time">
+<div class="phase">Ready</div>
+<div id="seconds">0</div>
+</div>
+</div>
+
+<div>
+<button onclick="start()">Start</button>
+<button onclick="pause()">Pause</button>
+<button onclick="reset()">Reset</button>
+</div>
+
+</div>
+</div>
+
+<script>
+// AUTO-START LOGIC
+setTimeout(() => {
+  document.getElementById("homeScreen").classList.add("fadeOut");
+  setTimeout(() => {
+    document.getElementById("breathUI").classList.add("active");
+  }, 900);
+}, 2000);
+
+// BREATHING ENGINE
+const circle=document.querySelector('.progress');
+const sec=document.getElementById('seconds');
+const phaseEl=document.querySelector('.phase');
+const ring=document.getElementById('ring');
+
+const r=130;
+const C=2*Math.PI*r;
+circle.style.strokeDasharray=C;
+circle.style.strokeDashoffset=C;
+
+const phases=[
+{name:'Inhale',duration:4},
+{name:'Hold',duration:7},
+{name:'Exhale',duration:8}
+];
+
+const total=phases.reduce((s,p)=>s+p.duration,0);
+
+let running=false,startTime=0,elapsedSaved=0,lastPhase="";
+
+function vibrate(ms){if(navigator.vibrate) navigator.vibrate(ms);}
+function ease(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
+
+function loop(now){
+ if(running){
+  let elapsed=(now-startTime)/1000+elapsedSaved;
+  let t=elapsed%total;
+
+  let acc=0,phase;
+  for(let p of phases){if(t<acc+p.duration){phase=p;break;}acc+=p.duration;}
+
+  if(phase.name!==lastPhase){vibrate(120);lastPhase=phase.name;}
+
+  let pt=t-acc;
+  let prog=pt/phase.duration;
+  let s=ease(prog);
+
+  let stroke;
+  if(phase.name==='Inhale'){stroke=s;ring.style.transform=`scale(${1+s*0.06})`;}
+  else if(phase.name==='Exhale'){stroke=1-s;ring.style.transform=`scale(${1-s*0.06})`;}
+  else{stroke=1;ring.style.transform="scale(1)";}
+
+  circle.style.strokeDashoffset=C*(1-stroke);
+  sec.textContent=Math.ceil(phase.duration-pt);
+  phaseEl.textContent=phase.name;
+ }
+ requestAnimationFrame(loop);
+}
+
+function start(){if(!running){running=true;startTime=performance.now();}}
+function pause(){if(running){running=false;elapsedSaved+=(performance.now()-startTime)/1000;}}
+function reset(){
+ running=false;startTime=0;elapsedSaved=0;lastPhase="";
+ circle.style.strokeDashoffset=C;
+ sec.textContent="0";
+ phaseEl.textContent="Ready";
+ ring.style.transform="scale(1)";
+}
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
