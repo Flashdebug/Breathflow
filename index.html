@@ -155,6 +155,9 @@ transform="rotate(-90 150 150)"/>
 
 <script>
   const ambient = new Audio("leberch-meditation-510292.mp3");
+  const inhaleAudio = new Audio("inhale.mp3");
+const holdAudio   = new Audio("hold.mp3");
+const exhaleAudio = new Audio("exhale.mp3");
 
 ambient.loop = true;
 ambient.volume = 0.4;
@@ -183,6 +186,12 @@ let soundEnabled = false; // ✅ default muted
   if(!soundEnabled){
     speechSynthesis.cancel();
     ambient.pause();
+    
+  // ✅ ADD THIS HERE (Step 5)
+  inhaleAudio.pause();
+  holdAudio.pause();
+  exhaleAudio.pause();
+
   }
 };
 
@@ -233,29 +242,22 @@ function drawWave(level, t){
   path += ` L 300 300 L 0 300 Z`;
   wave.setAttribute("d", path);
 }
-  function speak(text){
+  function playVoice(type){
 
   if(!soundEnabled) return;
 
-  const utterance = new SpeechSynthesisUtterance(text);
-
-  // ✅ Premium calming voice tuning
-  utterance.rate = 0.75;   // slower
-  utterance.pitch = 0.9;   // softer
-
-  const voices = speechSynthesis.getVoices();
-
-  // prefer female-like smooth voice
-  const voice = voices.find(v =>
-    v.name.toLowerCase().includes("female") ||
-    v.name.toLowerCase().includes("google") ||
-    v.name.toLowerCase().includes("natural")
-  ) || voices[0];
-
-  utterance.voice = voice;
-
-  speechSynthesis.cancel();
-  speechSynthesis.speak(utterance);
+  if(type === "Inhale"){
+    inhaleAudio.currentTime = 0;
+    inhaleAudio.play();
+  }
+  else if(type === "Hold"){
+    holdAudio.currentTime = 0;
+    holdAudio.play();
+  }
+  else if(type === "Exhale"){
+    exhaleAudio.currentTime = 0;
+    exhaleAudio.play();
+  }
 }
 function loop(now){
 if(running){
@@ -275,13 +277,13 @@ if(running && phase.name!==lastPhase){
 
   // 🔊 Voice cues
   if(phase.name === "Inhale"){
-    speak("Inhale");
+    playVoice("Inhale");
   }
   else if(phase.name === "Hold"){
-    speak("Hold");
+    playVoice("Hold");
   }
   else if(phase.name === "Exhale"){
-    speak("Exhale");
+    playVoice("Exhale");
   }
 
   lastPhase = phase.name;
@@ -374,6 +376,12 @@ function reset(){
   speechSynthesis.cancel();
   ambient.pause();
   ambient.currentTime = 0;
+  
+/* ✅ voice reset (Step 6) */
+inhaleAudio.currentTime = 0;
+holdAudio.currentTime = 0;
+exhaleAudio.currentTime = 0;
+
 }
 
 requestAnimationFrame(loop);
