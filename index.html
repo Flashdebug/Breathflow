@@ -154,10 +154,20 @@ transform="rotate(-90 150 150)"/>
 </div>
 
 <script>
-  const ambient = new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_c8fc5fae81.mp3");
+const ambient = new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_c8fc5fae81.mp3");
 
 ambient.loop = true;
-ambient.volume = 0.4;
+ambient.volume = 0.35;
+
+// ✅ unlock audio on first user interaction
+document.addEventListener("click", () => {
+  ambient.muted = true;   // unlock silently
+  ambient.play().then(() => {
+    ambient.pause();
+    ambient.currentTime = 0;
+    ambient.muted = false;
+  });
+}, { once: true });
 const home=document.getElementById("home");
 const app=document.getElementById("app");
 
@@ -239,20 +249,32 @@ function drawWave(level, t){
 
   const utterance = new SpeechSynthesisUtterance(text);
 
-  // ✅ Premium calming voice tuning
-  utterance.rate = 0.75;   // slower
-  utterance.pitch = 0.9;   // softer
+  // 🎧 Premium meditation feel
+  utterance.rate = 0.6;   // slower breathing
+  utterance.pitch = 0.85; // softer tone
+  utterance.volume = 1;
 
+  // fade-in effect
+  let vol = 0;
+  utterance.volume = 0;
+
+  const fade = setInterval(()=>{
+    vol += 0.15;
+    if(vol >= 1){
+      vol = 1;
+      clearInterval(fade);
+    }
+    utterance.volume = vol;
+  }, 120);
+
+  // ✅ better voice selection
   const voices = speechSynthesis.getVoices();
-
-  // prefer female-like smooth voice
-  const voice = voices.find(v =>
-    v.name.toLowerCase().includes("female") ||
-    v.name.toLowerCase().includes("google") ||
-    v.name.toLowerCase().includes("natural")
-  ) || voices[0];
-
-  utterance.voice = voice;
+  utterance.voice =
+    voices.find(v =>
+      v.name.includes("Google") ||
+      v.name.includes("Natural") ||
+      v.name.toLowerCase().includes("female")
+    ) || voices[0];
 
   speechSynthesis.cancel();
   speechSynthesis.speak(utterance);
@@ -330,6 +352,7 @@ requestAnimationFrame(loop);
 }
 
 function start(){
+
   if(!running){
 
     running = true;
@@ -337,17 +360,16 @@ function start(){
 
     if(soundEnabled){
       ambient.currentTime = 0;
-      ambient.play();
+      ambient.play().catch(()=>{}); // ✅ prevent crash
     }
 
-    // unlock voice
-    speechSynthesis.getVoices();
+    speechSynthesis.getVoices(); // unlock voice
   }
 }
 
 function pause(){
-  if(running){
 
+  if(running){
     running = false;
     elapsedSaved += (performance.now()-startTime)/1000;
 
@@ -367,15 +389,16 @@ function reset(){
   phaseEl.textContent = "Ready";
   ring.style.transform = "scale(1)";
 
-  /* ✅ reset wave */
+  /* wave reset */
   waveOffset = 0;
-  drawWave(0,0);
+  drawWave(0, 0);
 
-  /* ✅ reset audio */
+  /* audio reset */
   speechSynthesis.cancel();
   ambient.pause();
   ambient.currentTime = 0;
 }
+
 
 requestAnimationFrame(loop);
 </script>
