@@ -154,20 +154,10 @@ transform="rotate(-90 150 150)"/>
 </div>
 
 <script>
-  const ambient = new Audio("leberch-meditation-510292.mp3");
-  const inhaleAudio = new Audio("inhale.mp3");
-const holdAudio   = new Audio("hold.mp3");
-const exhaleAudio = new Audio("exhale.mp3");
-  
-// ✅ ADD THESE (IMPORTANT)
-[inhaleAudio, holdAudio, exhaleAudio].forEach(a => {
-  a.preload = "auto";
-  a.volume = 1;
-});
+  const sessionAudio = new Audio("fullplay.mp3");
 
-
-ambient.loop = true;
-ambient.volume = 0.4;
+sessionAudio.loop = true;
+sessionAudio.volume = 0.4;
 const home=document.getElementById("home");
 const app=document.getElementById("app");
 
@@ -191,7 +181,7 @@ let soundEnabled = false; // ✅ default muted
   soundBtn.textContent = soundEnabled ? "🔊" : "🔇";
 
   if(!soundEnabled){
-    ambient.pause();
+    sessionAudio.pause();
     
   // ✅ ADD THIS HERE (Step 5)
   inhaleAudio.pause();
@@ -248,24 +238,7 @@ function drawWave(level, t){
   path += ` L 300 300 L 0 300 Z`;
   wave.setAttribute("d", path);
 }
-  function playVoice(type){
 
-  if(!soundEnabled) return;
-
-  let src;
-
-  if(type === "Inhale") src = inhaleAudio.src;
-  else if(type === "Hold") src = holdAudio.src;
-  else if(type === "Exhale") src = exhaleAudio.src;
-
-  if(!src) return;
-
-  // ✅ create new instance (KEY FIX)
-  const voice = new Audio(src);
-  voice.volume = 1;
-
-  voice.play().catch(()=>{});
-}
 function loop(now){
 if(running){
 
@@ -281,17 +254,6 @@ acc+=p.duration;
 if(running && phase.name!==lastPhase){
 
   vibrate(120);
-
-  // 🔊 Voice cues
-  if(phase.name === "Inhale"){
-    playVoice("Inhale");
-  }
-  else if(phase.name === "Hold"){
-    playVoice("Hold");
-  }
-  else if(phase.name === "Exhale"){
-    playVoice("Exhale");
-  }
 
   lastPhase = phase.name;
 }
@@ -357,7 +319,7 @@ function pause(){
     running = false;
     elapsedSaved += (performance.now()-startTime)/1000;
 
-    ambient.pause();
+    sessionAudio.pause();
   }
 }
 
@@ -378,13 +340,9 @@ function reset(){
   drawWave(0,0);
 
   /* ✅ reset audio */
-  ambient.pause();
-  ambient.currentTime = 0;
+  sessionAudio.pause();
+ sessionAudio.currentTime = 0;
   
-/* ✅ voice reset (Step 6) */
-inhaleAudio.currentTime = 0;
-holdAudio.currentTime = 0;
-exhaleAudio.currentTime = 0;
 
 }
 
