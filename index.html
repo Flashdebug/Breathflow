@@ -158,6 +158,13 @@ transform="rotate(-90 150 150)"/>
   const inhaleAudio = new Audio("inhale.mp3");
 const holdAudio   = new Audio("hold.mp3");
 const exhaleAudio = new Audio("exhale.mp3");
+  
+// ✅ ADD THESE (IMPORTANT)
+[inhaleAudio, holdAudio, exhaleAudio].forEach(a => {
+  a.preload = "auto";
+  a.volume = 1;
+});
+
 
 ambient.loop = true;
 ambient.volume = 0.4;
@@ -184,7 +191,6 @@ let soundEnabled = false; // ✅ default muted
   soundBtn.textContent = soundEnabled ? "🔊" : "🔇";
 
   if(!soundEnabled){
-    speechSynthesis.cancel();
     ambient.pause();
     
   // ✅ ADD THIS HERE (Step 5)
@@ -246,18 +252,19 @@ function drawWave(level, t){
 
   if(!soundEnabled) return;
 
-  if(type === "Inhale"){
-    inhaleAudio.currentTime = 0;
-    inhaleAudio.play();
-  }
-  else if(type === "Hold"){
-    holdAudio.currentTime = 0;
-    holdAudio.play();
-  }
-  else if(type === "Exhale"){
-    exhaleAudio.currentTime = 0;
-    exhaleAudio.play();
-  }
+  let src;
+
+  if(type === "Inhale") src = inhaleAudio.src;
+  else if(type === "Hold") src = holdAudio.src;
+  else if(type === "Exhale") src = exhaleAudio.src;
+
+  if(!src) return;
+
+  // ✅ create new instance (KEY FIX)
+  const voice = new Audio(src);
+  voice.volume = 1;
+
+  voice.play().catch(()=>{});
 }
 function loop(now){
 if(running){
@@ -332,6 +339,7 @@ requestAnimationFrame(loop);
 }
 
 function start(){
+
   if(!running){
 
     running = true;
@@ -340,9 +348,6 @@ function start(){
     if(soundEnabled){
       ambient.play().catch(()=>{});
     }
-
-    // unlock voice
-    speechSynthesis.getVoices();
   }
 }
 
@@ -373,7 +378,6 @@ function reset(){
   drawWave(0,0);
 
   /* ✅ reset audio */
-  speechSynthesis.cancel();
   ambient.pause();
   ambient.currentTime = 0;
   
