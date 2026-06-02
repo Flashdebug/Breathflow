@@ -181,8 +181,11 @@ soundBtn.onclick = () => {
 
   if(soundEnabled){
 
-    // ✅ FIX: start audio immediately if app already running
     if(running){
+
+      // ✅ SYNC audio with timer
+      sessionAudio.currentTime = elapsedSaved % sessionAudio.duration;
+
       sessionAudio.play().catch(()=>{});
     }
 
@@ -310,6 +313,10 @@ function start(){
     startTime = performance.now();
 
     if(soundEnabled){
+
+      // ✅ SYNC before play
+      sessionAudio.currentTime = elapsedSaved % sessionAudio.duration;
+
       sessionAudio.play().catch(()=>{});
     }
   }
