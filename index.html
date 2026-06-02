@@ -175,23 +175,11 @@ setTimeout(()=>{
 let soundEnabled = false; // ✅ default muted
   
 soundBtn.onclick = () => {
-
   soundEnabled = !soundEnabled;
   soundBtn.textContent = soundEnabled ? "🔊" : "🔇";
 
-  if(soundEnabled){
-
-    // ✅ ONLY resume, do NOT change currentTime
-    if(running){
-      sessionAudio.play().catch(()=>{});
-    }
-
-  } else {
-
-    sessionAudio.pause();
-  }
+  sessionAudio.muted = !soundEnabled; // ✅ just mute/unmute
 };
-
 
 /* BREATH LOGIC */
 const circle=document.querySelector('.progress');
@@ -303,21 +291,15 @@ requestAnimationFrame(loop);
 }
 
 function start(){
-
   if(!running){
-
     running = true;
     startTime = performance.now();
 
-    if(soundEnabled){
+    // ✅ Always ensure audio is running
+    sessionAudio.play().catch(()=>{});
 
-      // ✅ Only sync at start (optional)
-      if(sessionAudio.currentTime === 0){
-        sessionAudio.currentTime = elapsedSaved;
-      }
-
-      sessionAudio.play().catch(()=>{});
-    }
+    // ✅ Apply mute state
+    sessionAudio.muted = !soundEnabled;
   }
 }
 
