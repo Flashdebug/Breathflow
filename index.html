@@ -154,6 +154,11 @@ transform="rotate(-90 150 150)"/>
 </div>
 
 <script>
+  let voices = [];
+
+speechSynthesis.onvoiceschanged = () => {
+  voices = speechSynthesis.getVoices();
+};
 const ambient = new Audio("leberch-meditation-510292.mp3");
 
 ambient.loop = true;
@@ -263,13 +268,10 @@ function drawWave(level, t){
   path += ` L 300 300 L 0 300 Z`;
   wave.setAttribute("d", path);
 }
-  function speak(text){
+function speak(text){
 
   if(!soundEnabled) return;
 
-  const voices = speechSynthesis.getVoices();
-
-  // ✅ If voices not ready, retry
   if(!voices || voices.length === 0){
     setTimeout(() => speak(text), 300);
     return;
@@ -277,12 +279,11 @@ function drawWave(level, t){
 
   const utterance = new SpeechSynthesisUtterance(text);
 
-  // 🎧 Premium feel
   utterance.rate = 0.6;
   utterance.pitch = 0.85;
   utterance.volume = 1;
 
-  // ✅ fade-in effect
+  // fade-in
   let vol = 0;
   utterance.volume = 0;
 
@@ -295,12 +296,11 @@ function drawWave(level, t){
     utterance.volume = vol;
   }, 120);
 
-  // ✅ Better voice selection
   const voice =
     voices.find(v =>
+      v.name.toLowerCase().includes("female") ||
       v.name.includes("Google") ||
-      v.name.includes("Natural") ||
-      v.name.toLowerCase().includes("female")
+      v.name.includes("Natural")
     ) || voices[0];
 
   utterance.voice = voice;
