@@ -336,8 +336,7 @@ function start(){
     startTime = performance.now();
 
     if(soundEnabled){
-      ambient.currentTime = 0;
-      ambient.play();
+      ambient.play().catch(()=>{});
     }
 
     // unlock voice
