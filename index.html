@@ -85,19 +85,7 @@ button{
 </head>
 
 <body>
-  <!-- 🔊 SOUND TOGGLE -->
-<button id="soundBtn" style="
-position:absolute;
-top:20px;
-right:20px;
-font-size:20px;
-background:none;
-border:none;
-color:white;
-cursor:pointer;">
-🔇
-</button>
-
+  
 <!-- HOME SCREEN -->
 <div id="home">
   <div class="glow"></div>
@@ -111,6 +99,19 @@ cursor:pointer;">
 <div id="app">
 <div class="card">
 <h2>BreathFlow</h2>
+  
+  <!-- 🔊 SOUND TOGGLE -->
+<button id="soundBtn" style="
+position:absolute;
+top:20px;
+right:20px;
+font-size:20px;
+background:none;
+border:none;
+color:white;
+cursor:pointer;">
+🔇
+</button>
 
 <div class="ringwrap" id="ring">
 <svg viewBox="0 0 300 300">
@@ -153,6 +154,10 @@ transform="rotate(-90 150 150)"/>
 </div>
 
 <script>
+  const ambient = new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_c8fc5fae81.mp3");
+
+ambient.loop = true;
+ambient.volume = 0.4;
 const home=document.getElementById("home");
 const app=document.getElementById("app");
 
@@ -164,13 +169,20 @@ setTimeout(()=>{
     app.style.opacity=1;
   },1000);
 },2000);
+
+    const soundBtn = document.getElementById("soundBtn");
+
+let soundEnabled = false; // ✅ default muted
+  
   soundBtn.onclick = () => {
+
   soundEnabled = !soundEnabled;
 
   soundBtn.textContent = soundEnabled ? "🔊" : "🔇";
 
   if(!soundEnabled){
     speechSynthesis.cancel();
+    ambient.pause();
   }
 };
 
@@ -179,9 +191,7 @@ const circle=document.querySelector('.progress');
 const sec=document.getElementById('seconds');
 const phaseEl=document.querySelector('.phase');
 const ring=document.getElementById('ring');
-  const soundBtn = document.getElementById("soundBtn");
 
-let soundEnabled = false; // ✅ default muted
 
   const wave = document.getElementById("wave");
 let waveOffset = 0;
@@ -224,21 +234,25 @@ function drawWave(level, t){
   wave.setAttribute("d", path);
 }
   function speak(text){
+
   if(!soundEnabled) return;
 
   const utterance = new SpeechSynthesisUtterance(text);
 
-  utterance.rate = 0.9;   // slower = more calm
-  utterance.pitch = 1;
+  // ✅ Premium calming voice tuning
+  utterance.rate = 0.75;   // slower
+  utterance.pitch = 0.9;   // softer
 
   const voices = speechSynthesis.getVoices();
 
-  const femaleVoice = voices.find(v =>
+  // prefer female-like smooth voice
+  const voice = voices.find(v =>
     v.name.toLowerCase().includes("female") ||
-    v.name.toLowerCase().includes("woman")
-  );
+    v.name.toLowerCase().includes("google") ||
+    v.name.toLowerCase().includes("natural")
+  ) || voices[0];
 
-  if(femaleVoice) utterance.voice = femaleVoice;
+  utterance.voice = voice;
 
   speechSynthesis.cancel();
   speechSynthesis.speak(utterance);
@@ -255,7 +269,7 @@ if(t<acc+p.duration){phase=p;break;}
 acc+=p.duration;
 }
 
-if(phase.name!==lastPhase){
+if(running && phase.name!==lastPhase){
 
   vibrate(120);
 
@@ -316,35 +330,52 @@ requestAnimationFrame(loop);
 }
 
 function start(){
-if(!running){
-running=true;
-startTime=performance.now();
-}
+  if(!running){
+
+    running = true;
+    startTime = performance.now();
+
+    if(soundEnabled){
+      ambient.currentTime = 0;
+      ambient.play();
+    }
+
+    // unlock voice
+    speechSynthesis.getVoices();
+  }
 }
 
 function pause(){
-if(running){
-running=false;
-elapsedSaved+=(performance.now()-startTime)/1000;
-}
+  if(running){
+
+    running = false;
+    elapsedSaved += (performance.now()-startTime)/1000;
+
+    ambient.pause();
+  }
 }
 
 function reset(){
-  running=false;
-  startTime=0;
-  elapsedSaved=0;
-  lastPhase="";
 
-  circle.style.strokeDashoffset=C;
-  sec.textContent="0";
-  phaseEl.textContent="Ready";
-  ring.style.transform="scale(1)";
+  running = false;
+  startTime = 0;
+  elapsedSaved = 0;
+  lastPhase = "";
+
+  circle.style.strokeDashoffset = C;
+  sec.textContent = "0";
+  phaseEl.textContent = "Ready";
+  ring.style.transform = "scale(1)";
 
   /* ✅ reset wave */
   waveOffset = 0;
-  drawWave(0, 0);
-}
+  drawWave(0,0);
 
+  /* ✅ reset audio */
+  speechSynthesis.cancel();
+  ambient.pause();
+  ambient.currentTime = 0;
+}
 
 requestAnimationFrame(loop);
 </script>
