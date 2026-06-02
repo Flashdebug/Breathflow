@@ -182,11 +182,6 @@ let soundEnabled = false; // ✅ default muted
 
   if(!soundEnabled){
     sessionAudio.pause();
-    
-  // ✅ ADD THIS HERE (Step 5)
-  inhaleAudio.pause();
-  holdAudio.pause();
-  exhaleAudio.pause();
 
   }
 };
@@ -308,7 +303,7 @@ function start(){
     startTime = performance.now();
 
     if(soundEnabled){
-      ambient.play().catch(()=>{});
+      sessionAudio.play().catch(()=>{});
     }
   }
 }
