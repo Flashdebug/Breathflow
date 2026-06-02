@@ -85,6 +85,18 @@ button{
 </head>
 
 <body>
+  <!-- 🔊 SOUND TOGGLE -->
+<button id="soundBtn" style="
+position:absolute;
+top:20px;
+right:20px;
+font-size:20px;
+background:none;
+border:none;
+color:white;
+cursor:pointer;">
+🔇
+</button>
 
 <!-- HOME SCREEN -->
 <div id="home">
@@ -152,12 +164,25 @@ setTimeout(()=>{
     app.style.opacity=1;
   },1000);
 },2000);
+  soundBtn.onclick = () => {
+  soundEnabled = !soundEnabled;
+
+  soundBtn.textContent = soundEnabled ? "🔊" : "🔇";
+
+  if(!soundEnabled){
+    speechSynthesis.cancel();
+  }
+};
 
 /* BREATH LOGIC */
 const circle=document.querySelector('.progress');
 const sec=document.getElementById('seconds');
 const phaseEl=document.querySelector('.phase');
 const ring=document.getElementById('ring');
+  const soundBtn = document.getElementById("soundBtn");
+
+let soundEnabled = false; // ✅ default muted
+
   const wave = document.getElementById("wave");
 let waveOffset = 0;
 
@@ -198,6 +223,26 @@ function drawWave(level, t){
   path += ` L 300 300 L 0 300 Z`;
   wave.setAttribute("d", path);
 }
+  function speak(text){
+  if(!soundEnabled) return;
+
+  const utterance = new SpeechSynthesisUtterance(text);
+
+  utterance.rate = 0.9;   // slower = more calm
+  utterance.pitch = 1;
+
+  const voices = speechSynthesis.getVoices();
+
+  const femaleVoice = voices.find(v =>
+    v.name.toLowerCase().includes("female") ||
+    v.name.toLowerCase().includes("woman")
+  );
+
+  if(femaleVoice) utterance.voice = femaleVoice;
+
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utterance);
+}
 function loop(now){
 if(running){
 
@@ -211,8 +256,21 @@ acc+=p.duration;
 }
 
 if(phase.name!==lastPhase){
-vibrate(120);
-lastPhase=phase.name;
+
+  vibrate(120);
+
+  // 🔊 Voice cues
+  if(phase.name === "Inhale"){
+    speak("Inhale");
+  }
+  else if(phase.name === "Hold"){
+    speak("Hold");
+  }
+  else if(phase.name === "Exhale"){
+    speak("Exhale");
+  }
+
+  lastPhase = phase.name;
 }
 
 let pt=t-acc;
