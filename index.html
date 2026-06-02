@@ -179,7 +179,15 @@ soundBtn.onclick = () => {
   soundEnabled = !soundEnabled;
   soundBtn.textContent = soundEnabled ? "🔊" : "🔇";
 
-  if(!soundEnabled){
+  if(soundEnabled){
+
+    // ✅ FIX: start audio immediately if app already running
+    if(running){
+      sessionAudio.play().catch(()=>{});
+    }
+
+  } else {
+
     sessionAudio.pause();
   }
 };
