@@ -161,13 +161,17 @@ ambient.volume = 0.35;
 
 // ✅ unlock audio on first user interaction
 document.addEventListener("click", () => {
-  ambient.muted = true;   // unlock silently
+
+  ambient.muted = true;
+
   ambient.play().then(() => {
     ambient.pause();
     ambient.currentTime = 0;
     ambient.muted = false;
-  });
+  }).catch(()=>{});
+
 }, { once: true });
+
 const home=document.getElementById("home");
 const app=document.getElementById("app");
 
@@ -184,13 +188,22 @@ setTimeout(()=>{
 
 let soundEnabled = false; // ✅ default muted
   
-  soundBtn.onclick = () => {
+soundBtn.onclick = () => {
 
   soundEnabled = !soundEnabled;
 
   soundBtn.textContent = soundEnabled ? "🔊" : "🔇";
 
-  if(!soundEnabled){
+  if(soundEnabled){
+
+    // ✅ Start ambient if app is already running
+    if(running){
+      ambient.currentTime = 0;
+      ambient.play().catch(()=>{});
+    }
+
+  } else {
+
     speechSynthesis.cancel();
     ambient.pause();
   }
@@ -358,12 +371,14 @@ function start(){
     running = true;
     startTime = performance.now();
 
+    // ✅ ALWAYS attempt play (browser will allow after click)
     if(soundEnabled){
       ambient.currentTime = 0;
-      ambient.play().catch(()=>{}); // ✅ prevent crash
+      ambient.play().catch(()=>{});
     }
 
-    speechSynthesis.getVoices(); // unlock voice
+    // ✅ unlock voices
+    speechSynthesis.getVoices();
   }
 }
 
