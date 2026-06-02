@@ -191,16 +191,23 @@ let soundEnabled = false; // ✅ default muted
 soundBtn.onclick = () => {
 
   soundEnabled = !soundEnabled;
-
   soundBtn.textContent = soundEnabled ? "🔊" : "🔇";
 
   if(soundEnabled){
 
-    // ✅ Start ambient if app is already running
-    if(running){
+    // ✅ FULL unlock (CRITICAL)
+    ambient.play().then(() => {
+      ambient.pause();
       ambient.currentTime = 0;
-      ambient.play().catch(()=>{});
-    }
+
+      // ✅ if already running → start real playback
+      if(running){
+        ambient.play().catch(()=>{});
+      }
+    }).catch(()=>{});
+
+    // ✅ ensure voices loaded
+    speechSynthesis.getVoices();
 
   } else {
 
@@ -260,14 +267,22 @@ function drawWave(level, t){
 
   if(!soundEnabled) return;
 
+  const voices = speechSynthesis.getVoices();
+
+  // ✅ If voices not ready, retry
+  if(!voices || voices.length === 0){
+    setTimeout(() => speak(text), 300);
+    return;
+  }
+
   const utterance = new SpeechSynthesisUtterance(text);
 
-  // 🎧 Premium meditation feel
-  utterance.rate = 0.6;   // slower breathing
-  utterance.pitch = 0.85; // softer tone
+  // 🎧 Premium feel
+  utterance.rate = 0.6;
+  utterance.pitch = 0.85;
   utterance.volume = 1;
 
-  // fade-in effect
+  // ✅ fade-in effect
   let vol = 0;
   utterance.volume = 0;
 
@@ -280,14 +295,15 @@ function drawWave(level, t){
     utterance.volume = vol;
   }, 120);
 
-  // ✅ better voice selection
-  const voices = speechSynthesis.getVoices();
-  utterance.voice =
+  // ✅ Better voice selection
+  const voice =
     voices.find(v =>
       v.name.includes("Google") ||
       v.name.includes("Natural") ||
       v.name.toLowerCase().includes("female")
     ) || voices[0];
+
+  utterance.voice = voice;
 
   speechSynthesis.cancel();
   speechSynthesis.speak(utterance);
