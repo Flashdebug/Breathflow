@@ -181,11 +181,8 @@ soundBtn.onclick = () => {
 
   if(soundEnabled){
 
+    // ✅ ONLY resume, do NOT change currentTime
     if(running){
-
-      // ✅ SYNC audio with timer
-      sessionAudio.currentTime = elapsedSaved % sessionAudio.duration;
-
       sessionAudio.play().catch(()=>{});
     }
 
@@ -314,13 +311,16 @@ function start(){
 
     if(soundEnabled){
 
-      // ✅ SYNC before play
-      sessionAudio.currentTime = elapsedSaved % sessionAudio.duration;
+      // ✅ Only sync at start (optional)
+      if(sessionAudio.currentTime === 0){
+        sessionAudio.currentTime = elapsedSaved;
+      }
 
       sessionAudio.play().catch(()=>{});
     }
   }
 }
+
 
 function pause(){
   if(running){
